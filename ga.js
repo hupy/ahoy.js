@@ -2,25 +2,14 @@
     "use strict";
 
     var config = {
-        urlPrefix: "http://track.xxx.com",
-        eventsUrl: "/ga/events",
-        cookieDomain: null,
-        page: null,
-        startOnReady: true
+        eventsUrl: "http://track.xxx.com/ga/events",
+        cookieDomain: null
     };
 
     var ga = window.ga || window.GA || {};
 
-    ga.configure = function (options) {
-        for (var key in options) {
-            if (options.hasOwnProperty(key)) {
-                config[key] = options[key];
-            }
-        }
-    };
-
     var $ = window.jQuery || window.Zepto || window.$;
-    var visitId, visitorId, track;
+    var visitId, visitorId
     var visitTtl = 4 * 60; // 4 hours
     var visitorTtl = 2 * 365 * 24 * 60; // 2 years
     var isReady = false;
@@ -29,7 +18,7 @@
     var canStringify = typeof(JSON) !== "undefined" && typeof(JSON.stringify) !== "undefined";
 
     function eventsUrl() {
-        return config.urlPrefix + config.eventsUrl;
+        return config.eventsUrl;
     }
 
     // cookies
@@ -70,7 +59,7 @@
     }
 
     function log(message) {
-        if (getCookie("ga_debug")) {
+        if (ga.getDebug()) {
             window.console.log(message);
         }
     }
@@ -105,13 +94,14 @@
         }
     }
 
-    ga.getVisitId = ga.getVisitToken = function () {
+    ga.getVisitId = function () {
         return getCookie("ga_visit");
     };
 
-    ga.getVisitorId = ga.getVisitorToken = function () {
+    ga.getVisitorId = function () {
         return getCookie("ga_visitor");
     };
+
     ga.getDebug = function () {
         return getCookie("ga_debug")
     }
@@ -180,25 +170,11 @@
                     visitorId = generateId();
                     setCookie("ga_visitor", visitorId, visitorTtl);
                 }
-
-                var data = {
-                    visit_token: visitId,
-                    visitor_token: visitorId,
-                    landing_page: window.location.href,
-                    screen_width: window.screen.width,
-                    screen_height: window.screen.height
-                };
-
-                // referrer
-                if (document.referrer.length > 0) {
-                    data.referrer = document.referrer;
-                }
-
-                log(data);
             } else {
                 log("Cookies disabled");
-                setReady();
             }
+
+            setReady();
         }
     }
 
@@ -258,9 +234,7 @@
 
     ga.trackView = function () {
         var properties = {
-            url: window.location.href,
-            title: document.title,
-            page: config.page || window.location.pathname
+            url: window.location.href
         };
 
         ga.track("$view", properties);
@@ -300,10 +274,8 @@
     };
 
     $(function () {
-        if (config.startOnReady) {
-            ga.start();
-            ga.trackAll();
-        }
+        ga.start();
+        ga.trackAll();
     });
 
     window.ga = ga;
