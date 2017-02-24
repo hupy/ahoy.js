@@ -2,8 +2,7 @@
     "use strict";
 
     var config = {
-        urlPrefix: "",
-        visitsUrl: "/ga/visits",
+        urlPrefix: "http://track.xxx.com",
         eventsUrl: "/ga/events",
         cookieDomain: null,
         page: null,
@@ -28,10 +27,6 @@
     var queue = [];
     var eventQueue = [];
     var canStringify = typeof(JSON) !== "undefined" && typeof(JSON.stringify) !== "undefined";
-
-    function visitsUrl() {
-        return config.urlPrefix + config.visitsUrl;
-    }
 
     function eventsUrl() {
         return config.urlPrefix + config.eventsUrl;
@@ -96,7 +91,6 @@
         }
     }
 
-    // http://stackoverflow.com/a/2117523/1177228
     function generateId() {
         return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
             var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
@@ -118,11 +112,6 @@
     ga.getVisitorId = ga.getVisitorToken = function () {
         return getCookie("ga_visitor");
     };
-
-    ga.getTrack = function () {
-        return getCookie("ga_track")
-    }
-
     ga.getDebug = function () {
         return getCookie("ga_debug")
     }
@@ -131,7 +120,6 @@
         destroyCookie("ga_visit");
         destroyCookie("ga_visitor");
         destroyCookie("ga_events");
-        destroyCookie("ga_track");
         return true;
     };
 
@@ -143,10 +131,6 @@
         }
         return true;
     };
-
-    function page() {
-        return config.page || window.location.pathname;
-    }
 
     // from jquery-ujs
     function csrfToken() {
@@ -177,17 +161,12 @@
 
         visitId = ga.getVisitId();
         visitorId = ga.getVisitorId();
-        track = ga.getTrack();
 
-        if (visitId && visitorId && !track) {
+        if (visitId && visitorId) {
             // TODO keep visit alive?
             log("Active visit");
             setReady();
         } else {
-            if (track) {
-                destroyCookie("ga_track");
-            }
-
             if (!visitId) {
                 visitId = generateId();
                 setCookie("ga_visit", visitId, visitTtl);
@@ -216,8 +195,6 @@
                 }
 
                 log(data);
-
-                sendRequest(visitsUrl(), data, setReady);
             } else {
                 log("Cookies disabled");
                 setReady();
@@ -251,7 +228,6 @@
     ga.track = function (name, properties) {
         // generate unique id
         var event = {
-            id: generateId(),
             name: name,
             properties: properties || {},
             time: (new Date()).getTime() / 1000.0
@@ -280,20 +256,13 @@
         });
     };
 
-    ga.trackView = function (additionalProperties) {
+    ga.trackView = function () {
         var properties = {
             url: window.location.href,
             title: document.title,
-            page: page()
+            page: config.page || window.location.pathname
         };
 
-        if (additionalProperties) {
-            for (var propName in additionalProperties) {
-                if (additionalProperties.hasOwnProperty(propName)) {
-                    properties[propName] = additionalProperties[propName];
-                }
-            }
-        }
         ga.track("$view", properties);
     };
 
@@ -301,8 +270,10 @@
         $(document).on("click", "a", function (e) {
             var $target = $(e.currentTarget);
             var properties = {};
-            properties.text = $.trim($target.text().replace(/[\s\r\n]+/g, " "));
             properties.href = $target.attr("href");
+            if($target.attr("data-beacon")) {
+                properties.beacon = $target.attr("data-beacon");
+            }
             ga.track("$click", properties);
         });
     };
@@ -312,11 +283,9 @@
         ga.trackClicks();
     };
 
-    // push events from queue
     try {
         eventQueue = JSON.parse(getCookie("ga_events") || "[]");
     } catch (e) {
-        // do nothing
     }
 
     for (var i = 0; i < eventQueue.length; i++) {
