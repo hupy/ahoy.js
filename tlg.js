@@ -82,7 +82,7 @@
         CurURL: window.location.href,
         Referrer: document.referrer,
         WindowSize: document.documentElement.clientWidth + "x" + document.documentElement.clientHeight,
-        ScreenSize: window.screen.width + "," + window.screen.height,
+        ScreenSize: window.screen.width + "x" + window.screen.height,
         Domain: function () {
             var host = window.location.host.toLowerCase(), regx = /.*?([^\.]+\.(com|org|net|biz|edu|cc)(\.[^\.]+)?)/;
             return regx.test(host) ? "." + host.replace(regx, "$1") : ""
@@ -95,8 +95,8 @@
             Utils.sendLog({
                 tag: "pageview",
                 rand_id: Utils.getRandom(),
-                url: TRACK.CurURL,
-                referrer: TRACK.Referrer,
+                url: encodeURIComponent(TRACK.CurURL),
+                referrer: encodeURIComponent(TRACK.Referrer),
                 ws: TRACK.WindowSize,
                 ss: TRACK.ScreenSize
             });
