@@ -2,8 +2,8 @@
     "use strict";
 
     var Config = {
-        trackpv: "http://track.xx.com/pv",
-        trackevent: "http://track.xx.com/event"
+        trackpv: "http://s.xiaoqudaquan.com/pv",
+        trackevent: "http://s.xiaoqudaquan.com/event"
     };
 
     var Utils = {
@@ -72,17 +72,18 @@
                     };
                 ele.src = src;
                 document.body.appendChild(ele)
+            } catch (c) {
             }
         }
     };
 
     var TRACK = {
         ClickID: 1,
-        curURL: window.location.href,
-        referrer: document.referrer,
-        window_size: document.documentElement.clientWidth + "x" + gdocument.documentElement.clientHeight,
-        screen_size: window.screen.width + "," + window.screen.height,
-        domain: function () {
+        CurURL: window.location.href,
+        Referrer: document.referrer,
+        WindowSize: document.documentElement.clientWidth + "x" + document.documentElement.clientHeight,
+        ScreenSize: window.screen.width + "," + window.screen.height,
+        Domain: function () {
             var host = window.location.host.toLowerCase(), regx = /.*?([^\.]+\.(com|org|net|biz|edu|cc)(\.[^\.]+)?)/;
             return regx.test(host) ? "." + host.replace(regx, "$1") : ""
         }(),
@@ -90,14 +91,14 @@
             var uuid = Utils.getUUID();
             return uuid.substring(0, uuid.indexOf("-"));
         }(),
-        trackLog: function () {
+        track: function () {
             Utils.sendLog({
                 tag: "pageview",
                 rand_id: Utils.getRandom(),
-                url: Config.curURL,
-                referrer: Config.referrer,
-                ws: Config.window_size,
-                ss: Config.screen_size
+                url: TRACK.CurURL,
+                referrer: TRACK.Referrer,
+                ws: TRACK.WindowSize,
+                ss: TRACK.ScreenSize
             });
         },
         bindTrackToURL: function () {
@@ -112,16 +113,20 @@
                 }
 
                 if (href.match(/[\?&]ClickID=\d*/)) {
-                    $(this).attr("href", href.replace(/ClickID=\d*/, "ClickID=" + Config.ClickID));
+                    $(this).attr("href", href.replace(/ClickID=\d*/, "ClickID=" + TRACK.ClickID));
                 } else {
                     var beacon = $(this).attr("data-beacon") || "1000-00-000";
-                    href += href.trim() + (-1 == c.indexOf("?") ? "?" : "&");
-                    href += "TrackID=" + beacon + "-" + Config.TrackID + "&ClickID=" + Config.ClickID;
+                    href = href.trim();
+                    href += (-1 == href.indexOf("?") ? "?" : "&");
+                    href += "TrackID=" + beacon + "-" + TRACK.TrackID + "&ClickID=" + TRACK.ClickID;
                     $(this).attr("href", href);
                 }
 
-                Config.ClickID++;
+                TRACK.ClickID++;
             });
         }
-    }
+    };
+
+    TRACK.track();
+    TRACK.bindTrackToURL();
 })(window);
