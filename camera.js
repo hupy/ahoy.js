@@ -19,7 +19,7 @@
                     return unescape(c.substring(nameEQ.length, c.length));
                 }
             }
-            return null;
+            return "";
         },
         destroyCookie: function (name) {
             setCookie(name, "", -1);
