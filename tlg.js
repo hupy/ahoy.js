@@ -2,25 +2,10 @@
     "use strict";
 
     var Config = {
-        trackpv: "http://s.xiaoqudaquan.com/pv",
-        trackevent: "http://s.xiaoqudaquan.com/event"
+        trackpv: "http://track.xiaoqudaquan.com"
     };
 
     var Utils = {
-        setCookie: function (name, value, ttl) {
-            var expires = "";
-            var cookieDomain = "";
-            if (ttl) {
-                var date = new Date();
-                date.setTime(date.getTime() + (ttl * 60 * 1000));
-                expires = "; expires=" + date.toGMTString();
-            }
-            var domain = config.cookieDomain || config.domain;
-            if (domain) {
-                cookieDomain = "; domain=" + domain;
-            }
-            document.cookie = name + "=" + escape(value) + expires + cookieDomain + "; path=/";
-        },
         getCookie: function (name) {
             var i, c;
             var nameEQ = name + "=";
@@ -58,22 +43,8 @@
         getRandom: function () {
             return window.Math.random()
         },
-        loadScript: function (src, callback) {
-            try {
-                var ele = document.createElement("script");
-                ele.type = "text/javascript";
-                ele.readyState ?
-                    ele.onreadystatechange = function () {
-                        if ("loaded" == ele.readyState || "complete" == ele.readyState) {
-                            ele.onreadystatechange = null, callback && callback();
-                        }
-                    } : ele.onload = function () {
-                        callback && callback()
-                    };
-                ele.src = src;
-                document.body.appendChild(ele)
-            } catch (c) {
-            }
+        subtract: function (a, b) {
+            return ("number" === typeof a && "number" === typeof b && a > b) ? (a - b) : -1;
         }
     };
 
@@ -93,13 +64,37 @@
         }(),
         track: function () {
             Utils.sendLog({
-                tag: "pageview",
+                tag: "pv",
+                uuid: Utils.getCookie("DQ_UUID"),
+                uid: Utils.getCookie("DQ_UID"),
                 rand_id: Utils.getRandom(),
                 url: encodeURIComponent(TRACK.CurURL),
-                referrer: encodeURIComponent(TRACK.Referrer),
-                ws: TRACK.WindowSize,
-                ss: TRACK.ScreenSize
+                referrer: encodeURIComponent(TRACK.Referrer)
             });
+        },
+        trackPerformance: function () {
+            if (window && window.performance && window.performance.timing) {
+                var p = window.performance.timing;
+                Utils.sendLog({
+                    tag: "pf",
+                    rand_id: Utils.getRandom(),
+                    url: encodeURIComponent(TRACK.CurURL),
+                    referrer: encodeURIComponent(TRACK.Referrer),
+                    ws: TRACK.WindowSize,
+                    ss: TRACK.ScreenSize,
+                    loadPage: Utils.subtract(p.loadEventEnd, p.navigationStart),
+                    domReady: Utils.subtract(p.domComplete, p.responseEnd),
+                    redirect: Utils.subtract(p.redirectEnd, p.redirectStart),
+                    dns: Utils.subtract(p.domainLookupEnd, p.domainLookupStart),
+                    ttfb: Utils.subtract(p.responseStart, p.navigationStart),
+                    request: Utils.subtract(p.responseEnd, p.requestStart),
+                    loadEvent: Utils.subtract(p.loadEventEnd, p.loadEventStart),
+                    appcache: Utils.subtract(p.domainLookupStart, p.fetchStart),
+                    unloadEvent: Utils.subtract(p.unloadEventEnd, p.unloadEventStart),
+                    connect: Utils.subtract(p.connectEnd, p.connectStart),
+                    DOMContentLoaded: Utils.subtract(p.domContentLoadedEventEnd, p.fetchStart)
+                });
+            }
         },
         bindTrackToURL: function () {
             $("body").on("click", "a", function () {
@@ -128,5 +123,6 @@
     };
 
     TRACK.track();
+    TRACK.trackPerformance();
     TRACK.bindTrackToURL();
 })(window);
