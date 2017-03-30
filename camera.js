@@ -2,7 +2,7 @@
     "use strict";
 
     var Config = {
-        trackpv: "http://track.xiaoqudaquan.com"
+        trackpv: "http://track.xiaoqudaquan.com/"
     };
 
     var Utils = {
@@ -24,14 +24,14 @@
         destroyCookie: function (name) {
             setCookie(name, "", -1);
         },
-        sendLog: function (data) {
+        sendLog: function (path, data) {
             if (data && "object" === typeof data) {
                 var params = [];
                 for (var item in data) {
                     params.push(item + "=" + data[item]);
                 }
 
-                (new Image).src = Config.trackpv + "?" + params.join("&");
+                (new Image).src = Config.trackpv + path + "?" + params.join("&");
             }
         },
         getUUID: function () {
@@ -63,8 +63,7 @@
             return uuid.substring(0, uuid.indexOf("-"));
         }(),
         track: function () {
-            Utils.sendLog({
-                tag: "pv",
+            Utils.sendLog("pv", {
                 uuid: Utils.getCookie("DQ_UUID"),
                 uid: Utils.getCookie("DQ_UID"),
                 rand_id: Utils.getRandom(),
@@ -75,8 +74,7 @@
         trackPerformance: function () {
             if (window && window.performance && window.performance.timing) {
                 var p = window.performance.timing;
-                Utils.sendLog({
-                    tag: "pf",
+                Utils.sendLog("pf", {
                     rand_id: Utils.getRandom(),
                     url: encodeURIComponent(TRACK.CurURL),
                     referrer: encodeURIComponent(TRACK.Referrer),
